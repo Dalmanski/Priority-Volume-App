@@ -107,9 +107,14 @@ class VolumeController(QMainWindow):
         self.btn_auto_priority.setCheckable(True)
         self.btn_auto_priority.setChecked(self.settings.get("auto_priority_enabled", False))
         self.btn_auto_priority.setStyleSheet(self.auto_style(self.btn_auto_priority.isChecked()))
+        self.btn_auto_100 = QPushButton("Auto 100% open app")
+        self.btn_auto_100.setCheckable(True)
+        self.btn_auto_100.setChecked(self.settings.get("auto_100_enabled", False))
+        self.btn_auto_100.setStyleSheet(self.auto_style(self.btn_auto_100.isChecked()))
         self.top_layout.addWidget(self.btn_all_100)
         self.top_layout.addWidget(self.btn_all_0)
         self.top_layout.addWidget(self.btn_auto_priority)
+        self.top_layout.addWidget(self.btn_auto_100)
         self.top_layout.addStretch()
         self.main_layout.addWidget(self.top_bar)
         info_row = QWidget()
@@ -160,6 +165,7 @@ class VolumeController(QMainWindow):
         self.btn_all_100.clicked.connect(self.set_all_100)
         self.btn_all_0.clicked.connect(self.set_all_0)
         self.btn_auto_priority.toggled.connect(self.on_auto_toggled)
+        self.btn_auto_100.toggled.connect(self.on_auto_100_toggled)
         self.spin_priority.valueChanged.connect(self.on_priority_spin_changed)
         self.spin_other.valueChanged.connect(self.on_other_spin_changed)
         self.refresh_sessions()
@@ -169,7 +175,7 @@ class VolumeController(QMainWindow):
         self.timer.start()
 
     def load_settings(self):
-        default = {"priority_percent": 100, "background_percent": 20, "auto_priority_enabled": False}
+        default = {"priority_percent": 100, "background_percent": 20, "auto_priority_enabled": False, "auto_100_enabled": False}
         try:
             if os.path.exists(self.settings_path):
                 with open(self.settings_path, "r", encoding="utf-8") as f:
@@ -184,6 +190,7 @@ class VolumeController(QMainWindow):
             self.settings["priority_percent"] = int(self.priority_percent)
             self.settings["background_percent"] = int(self.background_percent)
             self.settings["auto_priority_enabled"] = bool(self.btn_auto_priority.isChecked()) if hasattr(self, "btn_auto_priority") else self.settings.get("auto_priority_enabled", False)
+            self.settings["auto_100_enabled"] = bool(self.btn_auto_100.isChecked()) if hasattr(self, "btn_auto_100") else self.settings.get("auto_100_enabled", False)
             with open(self.settings_path, "w", encoding="utf-8") as f:
                 json.dump(self.settings, f, indent=2)
         except Exception:
@@ -202,6 +209,10 @@ class VolumeController(QMainWindow):
             fg = self.get_foreground_pid()
             if fg and fg in self.sessions:
                 self.set_priority_by_pid(fg)
+
+    def on_auto_100_toggled(self, checked):
+        self.btn_auto_100.setStyleSheet(self.auto_style(checked))
+        self.save_settings()
 
     def on_priority_spin_changed(self, val):
         self.priority_percent = int(val)
@@ -297,6 +308,13 @@ class VolumeController(QMainWindow):
             self.sessions[pid] = vol_iface
             icon = self.get_icon_for_pid(pid, proc)
             self.add_row(pid, name, vol_iface, icon)
+            try:
+                if hasattr(self, "btn_auto_100") and self.btn_auto_100.isChecked():
+                    vol_iface.SetMasterVolume(1.0, None)
+                    if pid in self.rows:
+                        self.rows[pid].update_volume_display(1.0)
+            except Exception:
+                pass
         for pid in current.keys():
             try:
                 vol_iface = current[pid][1]
