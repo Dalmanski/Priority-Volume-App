@@ -1,0 +1,6 @@
+Idk when this will start
+
+March 05, 2026:
+> Fixed where it prioritize volume when click on the slider
+> Added "Start with Window" on/off for startup
+> Added volume meter on each apps
