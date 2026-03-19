@@ -4,3 +4,9 @@ March 05, 2026:
 > Fixed where it prioritize volume when click on the slider
 > Added "Start with Window" on/off for startup
 > Added volume meter on each apps
+
+March 19, 2026:
+> Added mute/unmute button
+
+ToDo:
+> Idk if I want to update slidebar and volume bar based on on/off mute button
